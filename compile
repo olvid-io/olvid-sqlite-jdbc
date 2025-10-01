@@ -1,0 +1,7 @@
+#!/bin/zsh
+#FLAGS="-fPIE -pie -lm -lc -landroid -ldl -llog"
+make android-x86 OS_NAME=Linux OS_ARCH=android-x86
+make android-x86_64 OS_NAME=Linux OS_ARCH=android-x86_64
+make android-arm OS_NAME=Linux OS_ARCH=android-arm
+make android-arm64 OS_NAME=Linux OS_ARCH=android-arm64
+
