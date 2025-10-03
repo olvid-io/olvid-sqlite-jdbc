@@ -1,6 +1,6 @@
 #!/bin/zsh
-make android-x86 OS_NAME=Linux OS_ARCH=android-x86
-make android-x86_64 OS_NAME=Linux OS_ARCH=android-x86_64
-make android-arm OS_NAME=Linux OS_ARCH=android-arm
-make android-arm64 OS_NAME=Linux OS_ARCH=android-arm64
+make -j9 android-x86 OS_NAME=Linux OS_ARCH=android-x86
+make -j9 android-x86_64 OS_NAME=Linux OS_ARCH=android-x86_64
+make -j9 android-arm OS_NAME=Linux OS_ARCH=android-arm
+make -j9 android-arm64 OS_NAME=Linux OS_ARCH=android-arm64
 
