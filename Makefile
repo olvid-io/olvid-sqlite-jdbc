@@ -1,10 +1,9 @@
-
 include Makefile.common
 
 RESOURCE_DIR = src/main/resources
-NDK=27.2.12479018
-ANDROID_NDK_HOME=/Users/bruno/Library/Android/sdk/ndk/$(NDK)
-TOOLCHAIN=/Users/bruno/Library/Android/sdk/ndk/$(NDK)/toolchains/llvm/prebuilt/darwin-x86_64
+NDK=android-ndk-r27d
+ANDROID_NDK_HOME=`pwd`/$(NDK)
+TOOLCHAIN=$(ANDROID_NDK_HOME)/toolchains/llvm/prebuilt/linux-x86_64
 
 .phony: all package native native-all deploy
 
