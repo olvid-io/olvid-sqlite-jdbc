@@ -32,13 +32,14 @@ import java.nio.file.Paths;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.text.MessageFormat;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
 import java.util.stream.Stream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sqlite.util.LibraryLoaderUtil;
+import org.sqlite.util.Logger;
+import org.sqlite.util.LoggerFactory;
 import org.sqlite.util.StringUtils;
 
 /**
@@ -97,12 +98,12 @@ public class SQLiteJDBCLoader {
                                     try {
                                         Files.delete(nativeLib);
                                     } catch (Exception e) {
-                                        logger.error("Failed to delete old native lib", e);
+                                        logger.error(() -> "Failed to delete old native lib", e);
                                     }
                                 }
                             });
         } catch (IOException e) {
-            logger.error("Failed to open directory", e);
+            logger.error(() -> "Failed to open directory", e);
         }
     }
 
@@ -179,8 +180,7 @@ public class SQLiteJDBCLoader {
                 return true;
             } catch (UnsatisfiedLinkError e) {
                 logger.error(
-                        "Failed to load native library: {}",
-                        name,
+                        () -> MessageFormat.format("Failed to load native library: {0}", name),
                         e);
                 return false;
             }
@@ -289,8 +289,14 @@ public class SQLiteJDBCLoader {
             } catch (IOException e) {
                 // inline creation of logger to avoid build-time initialization of the logging
                 // framework in native-image
+                URL finalVersionFile = versionFile;
                 LoggerFactory.getLogger(VersionHolder.class)
-                        .error("Could not read version from file: {}", versionFile, e);
+                        .error(
+                                () ->
+                                        MessageFormat.format(
+                                                "Could not read version from file: {0}",
+                                                finalVersionFile),
+                                e);
             }
             VERSION = version;
         }

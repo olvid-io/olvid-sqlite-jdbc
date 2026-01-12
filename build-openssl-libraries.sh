@@ -1,10 +1,13 @@
 #! /usr/bin/env bash
+set -e
 
 MINIMUM_ANDROID_SDK_VERSION=$1
 MINIMUM_ANDROID_64_BIT_SDK_VERSION=$2
 OPENSSL_DIR=$3
 ANDROID_LIB_ROOT=$4
 OS_ARCH=$5
+
+cp 99.custom_extension.conf ${OPENSSL_DIR}/Configurations/
 
 (cd ${OPENSSL_DIR};
 
@@ -49,27 +52,28 @@ OS_ARCH=$5
  no-dsa no-dh no-ec no-ecdsa no-tls1 \
  no-rfc3779 no-whirlpool no-srp \
  no-mdc2 no-ecdh no-engine \
+ no-ui-console no-ts no-http no-chacha no-gost no-argon2 \
  no-srtp -Wl,-z,max-page-size=16384"
 
  rm -rf ${ANDROID_LIB_ROOT}
      case "${OS_ARCH}" in
          android-arm)
-             CONFIGURE_ARCH="android-arm -march=armv7-a"
+             CONFIGURE_ARCH="olvid-android-arm -march=armv7-a"
              ANDROID_API_VERSION=${MINIMUM_ANDROID_SDK_VERSION}
              OFFSET_BITS=32
              ;;
          android-x86)
-             CONFIGURE_ARCH=android-x86
+             CONFIGURE_ARCH=olvid-android-x86
              ANDROID_API_VERSION=${MINIMUM_ANDROID_SDK_VERSION}
              OFFSET_BITS=32
              ;;
          android-x86_64)
-             CONFIGURE_ARCH=android64-x86_64
+             CONFIGURE_ARCH=olvid-android-x86_64
              ANDROID_API_VERSION=${MINIMUM_ANDROID_64_BIT_SDK_VERSION}
              OFFSET_BITS=64
              ;;
          android-arm64)
-             CONFIGURE_ARCH=android-arm64
+             CONFIGURE_ARCH=olvid-android-arm64
              ANDROID_API_VERSION=${MINIMUM_ANDROID_64_BIT_SDK_VERSION}
              OFFSET_BITS=64
              ;;
@@ -79,6 +83,8 @@ OS_ARCH=$5
      esac
     TOOLCHAIN_BIN_PATH=${ANDROID_NDK_HOME}/toolchains/llvm/prebuilt/${TOOLCHAIN_SYSTEM}/bin
      PATH=${TOOLCHAIN_BIN_PATH}:${PATH} \
+     ANDROID_NDK_ROOT=${ANDROID_NDK_HOME} \
+     CPPFLAGS=-w \
      ./Configure ${CONFIGURE_ARCH} \
                  -D__ANDROID_API__=${ANDROID_API_VERSION} \
                  -D_FILE_OFFSET_BITS=${OFFSET_BITS} \
@@ -91,7 +97,7 @@ OS_ARCH=$5
 
      make clean
      PATH=${TOOLCHAIN_BIN_PATH}:${PATH} \
-         make SHLIB_VERSION_NUMBER= SHLIB_EXT=_1_1.so build_libs
+         make -j9 build_libs
 
      if [[ $? -ne 0 ]]; then
          echo "Error executing make for platform:${SQLCIPHER_TARGET_PLATFORM}"
@@ -99,3 +105,5 @@ OS_ARCH=$5
      fi
      mkdir -p ${ANDROID_LIB_ROOT}/${SQLCIPHER_TARGET_PLATFORM}
 )
+
+rm ${OPENSSL_DIR}/Configurations/99.custom_extension.conf

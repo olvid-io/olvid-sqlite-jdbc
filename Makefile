@@ -35,6 +35,7 @@ CCFLAGS:= -I$(SQLITE_OUT) -I$(SQLITE_INCLUDE) $(CCFLAGS) $(OTHERFLAGS)
 
 $(SQLITE_ARCHIVE):
 	@mkdir -p $(@D)
+	curl -L --max-redirs 0 -f -o$@ https://www.sqlite.org/2025/$(SQLITE_AMAL_PREFIX).zip || \
 	curl -L --max-redirs 0 -f -o$@ https://www.sqlite.org/2024/$(SQLITE_AMAL_PREFIX).zip || \
 	curl -L --max-redirs 0 -f -o$@ https://www.sqlite.org/2023/$(SQLITE_AMAL_PREFIX).zip || \
 	curl -L --max-redirs 0 -f -o$@ https://www.sqlite.org/2022/$(SQLITE_AMAL_PREFIX).zip || \
@@ -71,8 +72,9 @@ clean: clean-native clean-java clean-tests
 $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
 	@mkdir -p $(@D)
 	export ANDROID_NDK_HOME=$(ANDROID_NDK_HOME); ./build-openssl-libraries.sh 21 21 ./openssl $(SQLITE_OUT) $(OS_ARCH)
-	cp openssl/libcrypto_1_1.so $(SQLITE_OUT)/libcrypto_1_1.so
-	cd sqlcipher; CPPFLAGS="$(SQLITE_FLAGS)" ./configure --with-crypto-lib=none; make
+	mkdir -p $(SQLITE_OUT)/
+	cp openssl/libcrypto_3_0.so $(SQLITE_OUT)/libcrypto_3_0.so
+	cd sqlcipher; CPPFLAGS="$(SQLITE_FLAGS)" ./configure ; make -j9
 	cp $(SQLCIPHER_SOURCE)/sqlite3.c $(SQLITE_OUT)/sqlite3.c
 	cp $(SQLCIPHER_SOURCE)/sqlite3.h $(SQLITE_OUT)/sqlite3.h
 	perl -p -e "s/sqlite3_api;/sqlite3_api = 0;/g" \
@@ -104,6 +106,8 @@ $(SQLITE_OUT)/sqlite3.o : $(SQLITE_UNPACKED)
 	    -DSQLITE_DISABLE_PAGECACHE_OVERFLOW_STATS \
 	    -DSQLITE_HAS_CODEC \
 	    -DSQLITE_TEMP_STORE=2 \
+	    -DSQLITE_EXTRA_INIT=sqlcipher_extra_init \
+	    -DSQLITE_EXTRA_SHUTDOWN=sqlcipher_extra_shutdown \
 	    -DSQLCIPHER_CRYPTO_OPENSSL \
 	    $(SQLITE_FLAGS) \
 	    $(SQLITE_OUT)/sqlite3.c
@@ -113,7 +117,7 @@ $(SQLCIPHER_SOURCE)/sqlite3.h: $(SQLITE_UNPACKED)
 $(SQLITE_OUT)/$(LIBNAME): $(SQLITE_HEADER) $(SQLITE_OBJ) $(SRC)/org/sqlite/core/NativeDB.c $(TARGET)/common-lib/NativeDB.h
 	@mkdir -p $(@D)
 	$(CC) $(CCFLAGS) -I $(TARGET)/common-lib -c -o $(SQLITE_OUT)/NativeDB.o $(SRC)/org/sqlite/core/NativeDB.c
-	$(CC) $(CCFLAGS) -o $@ $(SQLITE_OUT)/NativeDB.o $(SQLITE_OBJ) $(LINKFLAGS) -L$(SQLITE_OUT) -l:libcrypto_1_1.so
+	$(CC) $(CCFLAGS) -o $@ $(SQLITE_OUT)/NativeDB.o $(SQLITE_OBJ) $(LINKFLAGS) -L$(SQLITE_OUT) -l:libcrypto_3_0.so -llog
 # Workaround for strip Protocol error when using VirtualBox on Mac
 	cp $@ /tmp/$(@F)
 	$(STRIP) /tmp/$(@F)
@@ -124,8 +128,7 @@ NATIVE_TARGET_DIR:=$(TARGET)/classes/org/sqlite/native/$(OS_NAME)/$(OS_ARCH)
 NATIVE_DLL:=$(NATIVE_DIR)/$(LIBNAME)
 
 # For cross-compilation, install docker. See also https://github.com/dockcross/dockcross
-# Disabled linux-armv6 build because of this issue; https://github.com/dockcross/dockcross/issues/190
-#native-all: native win32 win64 mac64 linux32 linux64 linux-arm linux-armv7 linux-arm64 linux-android-arm linux-ppc64 alpine-linux64
+#native-all: native win32 win64 win-armv7 win-arm64 mac64-signed mac-arm64-signed linux32 linux64 freebsd32 freebsd64 freebsd-arm64 linux-arm linux-armv6 linux-armv7 linux-arm64 linux-android-arm linux-android-arm64 linux-android-x86 linux-android-x64 linux-ppc64 linux-musl32 linux-musl64 linux-musl-arm64 linux-riscv64
 native-all: android-arm android-arm64 android-x86 android-x86_64
 
 native: $(NATIVE_DLL)
@@ -157,7 +160,7 @@ android-x86_64: OTHERFLAGS=-fPIE -pie -lm -lc -landroid -ldl -llog
 android-x86_64: LINKFLAGS=-shared -static-libgcc -pthread -lm -Wl -z max-page-size=16384
 android-x86_64: OS_NAME=Linux
 android-x86_64: OS_ARCH=android-x86_64
-android-x86_64: $(SQLITE_UNPACKED) jni-header clean-native native
+android-x86_64: $(SQLITE_UNPACKED) jni-header native
 
 android-x86: CC=$(TOOLCHAIN)/bin/i686-linux-android21-clang
 android-x86: STRIP=$(TOOLCHAIN)/bin/llvm-strip
@@ -165,7 +168,7 @@ android-x86: OTHERFLAGS=-fPIE -pie -lm -lc -landroid -ldl -llog
 android-x86: LINKFLAGS=-shared -static-libgcc -pthread -lm -Wl -z max-page-size=16384
 android-x86: OS_NAME=Linux
 android-x86: OS_ARCH=android-x86
-android-x86: $(SQLITE_UNPACKED) jni-header clean-native native
+android-x86: $(SQLITE_UNPACKED) jni-header native
 
 android-arm: CC=$(TOOLCHAIN)/bin/armv7a-linux-androideabi21-clang
 android-arm: STRIP=$(TOOLCHAIN)/bin/llvm-strip
@@ -173,7 +176,7 @@ android-arm: OTHERFLAGS=-fPIE -pie -lm -lc -landroid -ldl -llog
 android-arm: LINKFLAGS=-shared -static-libgcc -pthread -lm -Wl -z max-page-size=16384
 android-arm: OS_NAME=Linux
 android-arm: OS_ARCH=android-arm
-android-arm: $(SQLITE_UNPACKED) jni-header clean-native native
+android-arm: $(SQLITE_UNPACKED) jni-header native
 
 android-arm64: CC=$(TOOLCHAIN)/bin/aarch64-linux-android21-clang
 android-arm64: STRIP=$(TOOLCHAIN)/bin/llvm-strip
@@ -181,7 +184,7 @@ android-arm64: OTHERFLAGS=-fPIE -pie -lm -lc -landroid -ldl -llog
 android-arm64: LINKFLAGS=-shared -static-libgcc -pthread -lm -Wl -z max-page-size=16384
 android-arm64: OS_NAME=Linux
 android-arm64: OS_ARCH=android-arm64
-android-arm64: $(SQLITE_UNPACKED) jni-header clean-native native
+android-arm64: $(SQLITE_UNPACKED) jni-header native
 
 
 

@@ -14,4 +14,4 @@ atlassian-ide-plugin.xml
 *.class
 .fleet/settings.json
 /src/main/resources/org/sqlite/native
-android-ndk-r27d*
+android-ndk-r27d/

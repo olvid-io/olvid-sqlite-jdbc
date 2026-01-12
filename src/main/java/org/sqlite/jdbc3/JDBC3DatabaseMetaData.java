@@ -21,12 +21,12 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConnection;
 import org.sqlite.core.CoreDatabaseMetaData;
 import org.sqlite.core.CoreStatement;
 import org.sqlite.jdbc3.JDBC3DatabaseMetaData.ImportedKeyFinder.ForeignKey;
+import org.sqlite.util.Logger;
+import org.sqlite.util.LoggerFactory;
 import org.sqlite.util.QueryUtils;
 import org.sqlite.util.StringUtils;
 
@@ -438,12 +438,12 @@ public abstract class JDBC3DatabaseMetaData extends CoreDatabaseMetaData {
 
     /** @see java.sql.DatabaseMetaData#supportsAlterTableWithAddColumn() */
     public boolean supportsAlterTableWithAddColumn() {
-        return false;
+        return true;
     }
 
     /** @see java.sql.DatabaseMetaData#supportsAlterTableWithDropColumn() */
     public boolean supportsAlterTableWithDropColumn() {
-        return false;
+        return true;
     }
 
     /** @see java.sql.DatabaseMetaData#supportsANSI92EntryLevelSQL() */
@@ -964,14 +964,14 @@ public abstract class JDBC3DatabaseMetaData extends CoreDatabaseMetaData {
                         try {
                             rsColAutoinc.close();
                         } catch (Exception e) {
-                            LogHolder.logger.error("Could not close ResultSet", e);
+                            LogHolder.logger.error(() -> "Could not close ResultSet", e);
                         }
                     }
                     if (statColAutoinc != null) {
                         try {
                             statColAutoinc.close();
                         } catch (Exception e) {
-                            LogHolder.logger.error("Could not close statement", e);
+                            LogHolder.logger.error(() -> "Could not close statement", e);
                         }
                     }
                 }
@@ -1057,10 +1057,10 @@ public abstract class JDBC3DatabaseMetaData extends CoreDatabaseMetaData {
                                 }
                                 // try to parse the values
                                 try {
-                                    int iInteger = Integer.parseUnsignedInt(sInteger);
+                                    int iInteger = Integer.parseUnsignedInt(sInteger.trim());
                                     // parse decimals?
                                     if (sDecimal != null) {
-                                        iDecimalDigits = Integer.parseUnsignedInt(sDecimal);
+                                        iDecimalDigits = Integer.parseUnsignedInt(sDecimal.trim());
                                         // columns size equals sum of integer and decimal part
                                         // of dimension
                                         iColumnSize = iInteger + iDecimalDigits;
@@ -1078,7 +1078,10 @@ public abstract class JDBC3DatabaseMetaData extends CoreDatabaseMetaData {
                             colType = colType.substring(0, iStartOfDimension).trim();
                         }
 
-                        int colGenerated = "2".equals(colHidden) ? 1 : 0;
+                        int colGenerated = 0;
+                        if ("2".equals(colHidden) || "3".equals(colHidden)) {
+                            colGenerated = 1;
+                        }
 
                         sql.append("select ")
                                 .append(i + 1)
@@ -1122,7 +1125,7 @@ public abstract class JDBC3DatabaseMetaData extends CoreDatabaseMetaData {
                 try {
                     rs.close();
                 } catch (Exception e) {
-                    LogHolder.logger.error("Could not close ResultSet", e);
+                    LogHolder.logger.error(() -> "Could not close ResultSet", e);
                 }
             }
         }

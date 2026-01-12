@@ -1,4 +1,5 @@
-#!/bin/zsh
+#!/bin/sh
+set -e
 make -j9 android-x86 OS_NAME=Linux OS_ARCH=android-x86
 make -j9 android-x86_64 OS_NAME=Linux OS_ARCH=android-x86_64
 make -j9 android-arm OS_NAME=Linux OS_ARCH=android-arm
