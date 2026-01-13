@@ -27,13 +27,13 @@ unzip android-ndk-r27d-linux.zip
   - `target/sqlite-jdbc-3.50.3.0.jar`
 - Run `./compile` to compile the native code (you can safely ignore the multiple warnings). The following files are obtained:
   - `target/sqlite-3.50.3-Linux-android-arm64/libsqlitejdbc.so`
-  - `target/sqlite-3.50.3-Linux-android-arm64/libcrypto_1_1.so`
+  - `target/sqlite-3.50.3-Linux-android-arm64/libcrypto_3_0.so`
   - `target/sqlite-3.50.3-Linux-android-arm/libsqlitejdbc.so`
-  - `target/sqlite-3.50.3-Linux-android-arm/libcrypto_1_1.so`
+  - `target/sqlite-3.50.3-Linux-android-arm/libcrypto_3_0.so`
   - `target/sqlite-3.50.3-Linux-android-x86/libsqlitejdbc.so`
-  - `target/sqlite-3.50.3-Linux-android-x86/libcrypto_1_1.so`
+  - `target/sqlite-3.50.3-Linux-android-x86/libcrypto_3_0.so`
   - `target/sqlite-3.50.3-Linux-android-x86_64/libsqlitejdbc.so`
-  - `target/sqlite-3.50.3-Linux-android-x86_64/libcrypto_1_1.so`
+  - `target/sqlite-3.50.3-Linux-android-x86_64/libcrypto_3_0.so`
 
 Now you simply have to copy the obtained files to the relevant places in the Android Olvid repository:
 - the JAR file in `obv_engine/engine/libs/`
